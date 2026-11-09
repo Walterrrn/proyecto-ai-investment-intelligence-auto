@@ -19,3 +19,9 @@ structlog>=24.4.0
 
 # Security
 cryptography>=43.0.0
+
+# Market Data & Quantitative Intelligence
+yfinance>=1.8.0
+ccxt>=4.5.64
+pandas>=2.2.0
+numpy>=2.0.0

@@ -5,6 +5,50 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [0.2.0] - 2026-11-09
+### Añadido (Sprint 002 - Market Intelligence & Entorno Local)
+* **Entorno de Desarrollo Local Operativo en PC Principal (Ryzen 9 3950X / RTX 3090)**:
+  * Instalación de Python 3.12.10 vía `winget` en Windows 11.
+  * Creación del entorno virtual `.venv` dentro de la carpeta del proyecto.
+  * Instalación de todas las dependencias de producción y desarrollo.
+  * Generación de `.env` a partir de `.env.example`.
+  * Claves SSH generadas y protegidas para futura conexión a servidores Cloud.
+* **Módulo de Inteligencia de Mercado (`src/services/market_data/`)**:
+  * **Interfaz abstracta `BaseMarketDataCollector`**: Contrato canónico para todos los conectores de datos de mercado (`base.py`).
+  * **DTOs y Schemas Pydantic**: `OHLCVBarDTO`, `QuoteDTO`, `MacroObservationDTO` para normalización de datos entre fuentes (`schemas.py`).
+  * **Yahoo Finance Collector** (`yahoo_collector.py`): Conector asíncrono para acciones, ETFs e índices globales vía `yfinance`. Soporta velas diarias, horarias y semanales con validación de datos y conversión de zonas horarias a UTC.
+  * **Crypto Data Collector** (`crypto_collector.py`): Conector asíncrono para criptomonedas Spot (BTC/EUR, ETH/EUR) vía `ccxt` con Kraken como exchange principal. Incluye fallback automático a pares USDT si EUR no está disponible.
+  * **FRED Macro Collector** (`fred_collector.py`): Conector para indicadores macroeconómicos de la Reserva Federal (St. Louis FRED API). Series monitorizadas: FEDFUNDS (tipos de interés), T10Y2Y (curva de rendimientos), CPIAUCSL (inflación CPI), UNRATE (desempleo). Incluye valores de referencia baseline si no se dispone de API key.
+  * **MarketDataService** (`market_data_service.py`): Orquestador central que coordina los 3 conectores, gestiona el registro automático de activos en la base de datos, persiste velas OHLCV sin duplicados y genera un resumen consolidado del entorno de mercado multiactivo (4 compartimentos + macro).
+* **Modelo de Datos `MacroIndicator`** (`src/models/macro.py`):
+  * Nueva tabla relacional para series temporales macroeconómicas con índice compuesto único `(series_id, period_date)`.
+  * Registrado en `src/models/__init__.py`.
+* **Nuevos Endpoints REST FastAPI** (`src/api/v1/endpoints/market_data.py`):
+  * `GET /api/v1/market-data/overview`: Visión consolidada de cotizaciones de referencia de los 4 compartimentos (Core/URTH, Táctico/QQQ, Cripto/BTC, Liquidez/XEON.DE) y snapshot macroeconómico.
+  * `GET /api/v1/market-data/quote/{symbol}`: Cotización en tiempo real o EOD de cualquier activo.
+  * `GET /api/v1/market-data/history/{symbol}`: Consulta de velas OHLCV históricas almacenadas en base de datos.
+  * `POST /api/v1/market-data/sync`: Sincronización bajo demanda de datos históricos de un activo y/o indicadores macro.
+* **Dependencias de Datos de Mercado** (`requirements.txt`):
+  * `yfinance>=1.8.0`: Yahoo Finance para renta variable y ETFs.
+  * `ccxt>=4.5.64`: Librería unificada de exchanges de criptomonedas.
+  * `pandas>=2.2.0` y `numpy>=2.0.0`: Análisis cuantitativo y manipulación de series temporales.
+* **Tests Automatizados** (`tests/test_market_data.py`):
+  * `test_yahoo_collector_mocked`: Verificación de parseo de datos de Yahoo Finance con ticker simulado.
+  * `test_crypto_collector_mocked`: Verificación de parseo de velas CCXT con candles simulados.
+  * `test_fred_collector_fallback`: Verificación de valores baseline macroeconómicos sin API key.
+  * `test_market_data_service_db_sync`: Test de integración de persistencia en BD (inserción, actualización sin duplicados y sincronización macro).
+  * `test_api_market_data_endpoints`: Test de integración de los endpoints REST de Market Data.
+  * **Total: 19/19 tests pasando exitosamente** (14 originales + 5 nuevos).
+
+### Notas sobre Oracle Cloud Infrastructure (OCI)
+* Se intentó crear una instancia Always Free en la región de Madrid (`eu-madrid-1`):
+  * **VM.Standard.A1.Flex (ARM Ampere)**: Error `Out of capacity` en 4 OCPUs/24 GB y también en 2 OCPUs/12 GB.
+  * **VM.Standard.E2.1.Micro (AMD x86)**: Error `Out of capacity` igualmente.
+  * **Conclusión**: La región de Madrid tiene el cupo de máquinas gratuitas agotado. Se evaluará reintentar en otro momento o utilizar Google Cloud Platform (GCP) Always Free como alternativa.
+  * Se documentó el proceso completo de creación de cuenta y configuración de VM como referencia futura.
+
+---
+
 ## [0.1.0] - 2026-11-09
 ### Añadido (Sprint 001 - Foundation Setup)
 * **Arquitectura Base**:

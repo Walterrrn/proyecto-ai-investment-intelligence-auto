@@ -53,10 +53,24 @@
 
 ### ADR-006: Estrategia de Despliegue en Capas Gratuitas Cloud (Free Tier) para Operativa 24/7 a Coste Cero
 * **Fecha**: 2026-11-09
-* **Estado**: Aceptado
+* **Estado**: Aceptado (con observaciones de disponibilidad)
 * **Contexto**: El inversor busca alojar los automatismos y el backend 24/7 a coste cero (0,00 €) aprovechando las capas gratuitas de los proveedores cloud. Se evalúan AWS, GCP, Azure y Oracle Cloud.
 * **Decisión**:
   * **Opción Principal Recomendada**: **Oracle Cloud Infrastructure (OCI) Always Free**. Ofrece hasta 4 OCPUs y 24 GB de RAM en arquitectura ARM Ampere A1, 200 GB de disco y 10 TB/mes de tráfico saliente de forma indefinida (sin caducidad de 12 meses) con servidor en Madrid.
   * **Opción Secundaria**: **Google Cloud Platform (GCP) Always Free** (instancia `e2-micro`, 1 GB RAM, 30 GB disco permanente en EE.UU.) con swap de 2 GB y optimización de memoria en PostgreSQL y Redis.
   * **AWS y Azure**: Se descartan para 24/7 permanente, ya que sus máquinas gratuitas vencen a los 12 meses y sus servicios *Always Free* (como Azure App Service F1) se suspenden por inactividad.
+* **Observación (2026-11-09)**: La región de Madrid (`eu-madrid-1`) presenta errores persistentes de `Out of capacity` tanto para instancias ARM (`VM.Standard.A1.Flex`) como AMD (`VM.Standard.E2.1.Micro`) en cuentas gratuitas. OCI prioriza stock para cuentas de pago (Pay As You Go). Se recomienda reintentar periódicamente o evaluar GCP como alternativa inmediata sin restricciones de stock.
 * **Consecuencias**: Capacidad para operar 24 horas al día sin ningún coste recurrente de servidor y sin riesgo de que la instancia se apague por falta de peticiones.
+
+---
+
+### ADR-007: Arquitectura de Conectores de Datos de Mercado (Ports & Adapters)
+* **Fecha**: 2026-11-09
+* **Estado**: Aceptado
+* **Contexto**: La plataforma necesita consumir datos de múltiples fuentes heterogéneas (Yahoo Finance para renta variable, CCXT para criptomonedas, FRED para macroeconomía) con formatos, frecuencias y protocolos distintos. El acoplamiento directo a una sola librería o API genera fragilidad y dificulta la sustitución de proveedores.
+* **Decisión**: Aplicar el patrón **Ports & Adapters** (Arquitectura Hexagonal) al subsistema de datos de mercado:
+  * **Puerto (Interfaz)**: `BaseMarketDataCollector` define el contrato canónico con dos métodos: `fetch_bars()` y `fetch_latest_quote()`.
+  * **Adaptadores**: Implementaciones concretas para cada fuente (`YahooFinanceCollector`, `CryptoDataCollector`, `FredMacroCollector`).
+  * **DTOs Normalizados**: `OHLCVBarDTO`, `QuoteDTO` y `MacroObservationDTO` como contratos de transferencia de datos estandarizados independientes de la fuente.
+  * **Servicio Orquestador**: `MarketDataService` inyecta los adaptadores y expone una API unificada al resto de la plataforma.
+* **Consecuencias**: Cualquier conector puede ser reemplazado sin impacto en el resto del sistema (por ejemplo, sustituir Yahoo Finance por Financial Modeling Prep o Alpha Vantage). Los tests unitarios se simplifican mediante mocks de las interfaces.
