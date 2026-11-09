@@ -48,3 +48,15 @@
 * **Contexto**: Nunca se debe arriesgar capital real sin validación empírica suficiente.
 * **Decisión**: La plataforma arranca obligatoriamente en **Nivel 1: Analista (Solo Lectura)**. Las transiciones a Paper Trading (Nivel 2), Ejecución Supervisada (Nivel 3) y Autonomía Limitada (Nivel 4) requieren superar umbrales cuantitativos estrictos (Sharpe > 1.0, Profit Factor > 1.5 en out-of-sample) y aprobación humana explícita.
 * **Consecuencias**: Se elimina el riesgo de pérdidas accidentales durante las fases de diseño y desarrollo.
+
+---
+
+### ADR-006: Estrategia de Despliegue en Capas Gratuitas Cloud (Free Tier) para Operativa 24/7 a Coste Cero
+* **Fecha**: 2026-11-09
+* **Estado**: Aceptado
+* **Contexto**: El inversor busca alojar los automatismos y el backend 24/7 a coste cero (0,00 €) aprovechando las capas gratuitas de los proveedores cloud. Se evalúan AWS, GCP, Azure y Oracle Cloud.
+* **Decisión**:
+  * **Opción Principal Recomendada**: **Oracle Cloud Infrastructure (OCI) Always Free**. Ofrece hasta 4 OCPUs y 24 GB de RAM en arquitectura ARM Ampere A1, 200 GB de disco y 10 TB/mes de tráfico saliente de forma indefinida (sin caducidad de 12 meses) con servidor en Madrid.
+  * **Opción Secundaria**: **Google Cloud Platform (GCP) Always Free** (instancia `e2-micro`, 1 GB RAM, 30 GB disco permanente en EE.UU.) con swap de 2 GB y optimización de memoria en PostgreSQL y Redis.
+  * **AWS y Azure**: Se descartan para 24/7 permanente, ya que sus máquinas gratuitas vencen a los 12 meses y sus servicios *Always Free* (como Azure App Service F1) se suspenden por inactividad.
+* **Consecuencias**: Capacidad para operar 24 horas al día sin ningún coste recurrente de servidor y sin riesgo de que la instancia se apague por falta de peticiones.
