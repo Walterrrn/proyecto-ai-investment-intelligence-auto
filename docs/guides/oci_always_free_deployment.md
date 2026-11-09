@@ -1,7 +1,7 @@
 # GUÍA DE DESPLIEGUE EN ORACLE CLOUD (OCI) ALWAYS FREE
 ## Despliegue 24/7 a Coste Cero (0,00 €) en la Región de Madrid (España)
 
-Esta guía detalla paso a paso cómo crear y configurar una máquina virtual en **Oracle Cloud Infrastructure (OCI) Always Free** para alojar el sistema completo (Backend FastAPI, PostgreSQL 16 con TimescaleDB y Redis) sin pagar nada.
+Esta guía detalla paso a paso cómo crear y configurar una máquina virtual en **Oracle Cloud Infrastructure (OCI) Always Free** para alojar el sistema completo (Backend FastAPI, PostgreSQL 16 con TimescaleDB y Redis) sin pagar nada, garantizando **cero costes ocultos**.
 
 ---
 
@@ -15,131 +15,134 @@ Oracle Cloud asigna de por vida a cada cuenta gratuita (*Always Free Eligible*):
 
 ---
 
-## 2. PASO 1: REGISTRO DE CUENTA EN ORACLE CLOUD
+## 2. TIPS CRÍTICOS PARA EL REGISTRO DE CUENTA (EVITAR RECHAZOS Y SUSTOS)
 
-1. Entra en [oracle.com/cloud/free](https://www.oracle.com/cloud/free/).
-2. Haz clic en **Start for free**.
-3. Selecciona tu país (**Spain**) e introduce tus datos reales.
-4. **Home Region**: Selecciona obligatoriamente **Spain Central (Madrid)** (`eu-madrid-1`).
-   > *Nota*: La Home Region no se puede cambiar después y es donde tendrás los recursos Always Free con mínima latencia hacia brokers europeos.
-5. **Verificación de tarjeta**: Oracle solicita una tarjeta de débito/crédito para verificar la identidad (realiza una retención temporal de ~1 € que se reembolsa de inmediato). **No cobrarán nada**.
+El sistema de validación de Oracle es conocido por ser muy estricto para evitar abusos. Sigue estas recomendaciones al darte de alta:
 
----
-
-## 3. PASO 2: CREACIÓN DE LA MÁQUINA VIRTUAL ALWAYS FREE
-
-Una vez dentro de la consola de Oracle Cloud:
-
-1. Ve al menú hamburguesa (arriba a la izquierda) ➔ **Compute** ➔ **Instances** (Instancias).
-2. Haz clic en **Create instance** (Crear instancia).
-3. **Nombre**: `aii-cloud-node-01`
-4. **Compartment**: Deja el que viene por defecto.
-5. **Placement (Ubicación)**: Availability Domain por defecto (AD-1).
-6. **Image and Shape (Imagen y Forma)**:
-   * Haz clic en **Edit**:
-   * **Image**: Haz clic en *Change Image* y selecciona **Canonical Ubuntu 24.04** (o 22.04 LTS) versión **aarch64 (ARM)**.
-   * **Shape**: Haz clic en *Change Shape*, selecciona **Ampere (ARM Processor)** ➔ `VM.Standard.A1.Flex`.
-   * **Asignación de recursos recomendada**:
-     * **OCPUs**: `2` (equivalente a 4 vCPUs estándar).
-     * **Memoria (RAM)**: `12 GB` (suficiente para todo el stack y futuros modelos, dejando otros 2 OCPUs y 12 GB libres por si queremos crear otra VM en el futuro).
-   * Verás la etiqueta verde: **Always Free Eligible**.
-7. **Networking (Red)**:
-   * Selecciona *Create new virtual cloud network (VCN)* y *Create new public subnet*.
-   * Marca la casilla: **Assign a public IPv4 address** (Asignar una dirección IPv4 pública).
-8. **Add SSH Keys (Claves SSH)**:
-   * Selecciona *Generate a key pair for me* y descarga tanto la clave privada (`.key`) como la pública.
-   * *(O sube tu clave pública existente si ya usas `id_ed25519.pub` / `id_rsa.pub`)*.
-9. **Boot Volume (Disco)**:
-   * Marca *Specify a custom boot volume size* y asígnale **80 GB** o **100 GB** (de los 200 GB gratuitos totales).
-10. Haz clic en **Create** (Crear). En 1-2 minutos la máquina estará en estado verde **Running**.
+1. **Datos de Registro 100% Coincidentes**:
+   * Tu nombre, apellidos, dirección postal y código postal deben coincidir **exactamente** con los que figuran en el extracto bancario de la tarjeta que vayas a introducir.
+2. **Tipo de Tarjeta**:
+   * Utiliza preferiblemente una tarjeta de débito o crédito bancaria tradicional (Santander, BBVA, CaixaBank, ING, Openbank, etc.).
+   * *Precaución*: Las tarjetas virtuales temporales o desechables (como algunas de Revolut no verificadas) a veces son rechazadas por el filtro antifraude de Oracle.
+3. **Sin VPNs ni Proxies**:
+   * Regístrate desde tu conexión a Internet residencial habitual (fibra de casa), sin VPNs ni extensiones que modifiquen tu IP.
+4. **Retención de Verificación**:
+   * Oracle realiza una retención temporal de verificación de aproximadamente **0,93 € / 1 $**, que se libera y reembolsa automáticamente a los pocos minutos. **No es un cobro**.
+5. **Elección de la "Home Region"**:
+   * Selecciona obligatoriamente **Spain Central (Madrid)** (`eu-madrid-1`).
+   * *Atención*: La Home Region **no se puede cambiar nunca**. Al elegir Madrid, tus recursos Always Free se crearán en España, con una latencia mínima (< 10 ms) hacia brokers europeos como Interactive Brokers o Kraken.
 
 ---
 
-## 4. PASO 3: ABRIR PUERTOS EN LA RED DE ORACLE (SECURITY LIST)
+## 3. CÓMO BLINDARTE CONTRA SUSTOS: ALERTA DE PRESUPUESTO A 0,01 €
 
-Por defecto, Oracle bloquea todo el tráfico entrante salvo el puerto SSH (22). Para permitir tráfico web:
+Para tener la tranquilidad absoluta de que nunca te cobrarán nada:
 
-1. En la página de detalles de tu instancia, haz clic en tu **Subnet** (debajo de *Primary VNIC*).
+1. En la consola de Oracle Cloud, ve al menú superior izquierdo ➔ **Billing & Cost Management** ➔ **Budgets** (Presupuestos).
+2. Haz clic en **Create Budget**:
+   * **Budget Scope**: Compartment raíz.
+   * **Monthly Budget Amount**: `1` (o `0.01` €).
+   * **Threshold Metric**: *Forecasted Spend* (Gasto proyectado) o *Actual Spend*.
+   * **Threshold Percentage**: `100%`.
+   * **Email Recipients**: Tu correo electrónico personal.
+3. Si cualquier servicio de pago llegase a encenderse por error, recibirás un aviso inmediato por email mucho antes de que suponga ningún importe significativo.
+
+---
+
+## 4. ¿HACEN FALTA BASES DE DATOS EXTERNAS O PLANIFICADORES EN OCI?
+
+**Respuesta Técnica: NO**. 
+
+Todo el sistema está diseñado para funcionar de forma **autónoma y autocontenida dentro de la propia máquina virtual**:
+
+* **Base de Datos**: PostgreSQL 16 con TimescaleDB se ejecuta en un contenedor Docker con volumen persistente en los 80-100 GB SSD de la máquina virtual. Disponer de **12 GB de RAM** en la VM elimina por completo la necesidad de contratar bases de datos gestionadas de pago.
+* **Planificador de Tareas**: La ejecución de ingestas y tareas periódicas corre a través de un scheduler interno en Python (AsyncIO / Celery Beat) y cron jobs del propio Linux. No se necesita contratar EventBridge ni servicios de orquestación en la nube.
+* **Ventajas**:
+  1. **Coste estrictamente cero (0,00 €)**.
+  2. **Copias de seguridad fáciles**: Puedes programar un script diario que haga `pg_dump` y envíe la copia cifrada directamente a tu NAS Synology en casa vía SFTP/rsync.
+  3. **Portabilidad total**: Si un día quieres mover el sistema a otro servidor o a tu PC, basta con llevarte la carpeta con el `docker-compose.yml`.
+
+---
+
+## 5. CREACIÓN DE LA INSTANCIA ALWAYS FREE (PASO A PASO)
+
+1. Ve a **Compute** ➔ **Instances** ➔ **Create instance**.
+2. **Nombre**: `aii-cloud-node-01`
+3. **Image and Shape**:
+   * Imagen: **Canonical Ubuntu 24.04** (o 22.04 LTS) versión **aarch64 (ARM)**.
+   * Forma (*Shape*): **Ampere (ARM Processor)** ➔ `VM.Standard.A1.Flex`.
+   * OCPUs: `2`.
+   * RAM: `12 GB`.
+   * *(Asegúrate de que aparece la etiqueta verde: **Always Free Eligible**)*.
+4. **Networking**:
+   * *Create new VCN* y *Create new public subnet*.
+   * Marca: **Assign a public IPv4 address**.
+5. **Claves SSH**:
+   * Descarga la clave privada `.key` en tu PC (guárdala en un lugar seguro como `C:\Users\tu_usuario\.ssh\oci_key.key`).
+6. **Disco de Arranque**:
+   * Tamaño: **80 GB** o **100 GB** (dentro del cupo de 200 GB gratuitos).
+7. Haz clic en **Create**. En 1 minuto estará en verde (*Running*).
+
+---
+
+## 6. ABRIR PUERTOS EN LA RED DE ORACLE (SECURITY LIST)
+
+1. En la página de tu instancia, haz clic en tu **Subnet** (debajo de *Primary VNIC*).
 2. Haz clic en **Default Security List for vcn-...**.
-3. En *Ingress Rules* (Reglas de entrada), haz clic en **Add Ingress Rules**:
+3. En *Ingress Rules*, haz clic en **Add Ingress Rules**:
    * **Source CIDR**: `0.0.0.0/0`
    * **IP Protocol**: `TCP`
    * **Destination Port Range**: `80,443,8000`
-   * **Description**: `Allow HTTP, HTTPS and API Gateway`
+   * **Description**: `HTTP, HTTPS, API Gateway`
 4. Haz clic en **Add Ingress Rules**.
 
 ---
 
-## 5. PASO 4: CONEXIÓN POR SSH Y CONFIGURACIÓN INICIAL DEL SERVIDOR
+## 7. CONFIGURACIÓN INICIAL DEL SERVIDOR POR SSH
 
-1. Abre **PowerShell** en tu PC local donde descargaste la clave SSH:
-   ```powershell
-   ssh -i .\ssh-key-*.key ubuntu@TU_IP_PUBLICA_DE_ORACLE
-   ```
-2. Actualiza el sistema operativo en la máquina:
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   ```
-3. **Desbloquear el cortafuegos interno de Ubuntu (iptables de Oracle)**:
-   Las imágenes de Ubuntu en Oracle Cloud traen reglas de `iptables` estrictas que bloquean puertos aunque los abras en la consola web:
-   ```bash
-   sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-   sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-   sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 8000 -j ACCEPT
-   sudo netfilter-persistent save
-   ```
-4. **Instalar Docker y Docker Compose en Ubuntu**:
-   ```bash
-   sudo apt install -y docker.io docker-compose-v2 git
-   sudo usermod -aG docker ubuntu
-   # Reinicia la sesión para aplicar permisos
-   exit
-   ```
+Conéctate desde PowerShell en tu PC:
+```powershell
+ssh -i C:\ruta\a\tu\oci_key.key ubuntu@TU_IP_PUBLICA
+```
+
+Ejecuta dentro del servidor:
+```bash
+# 1. Actualizar paquetes
+sudo apt update && sudo apt upgrade -y
+
+# 2. Desbloquear iptables interno de Oracle para permitir puertos web
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 8000 -j ACCEPT
+sudo netfilter-persistent save
+
+# 3. Instalar Docker y Docker Compose
+sudo apt install -y docker.io docker-compose-v2 git
+sudo usermod -aG docker ubuntu
+exit
+```
 
 ---
 
-## 6. PASO 5: DESPLIEGUE DEL REPOSITORIO CON DOCKER COMPOSE
+## 8. FLUJO DE TRABAJO Y DESPLIEGUE AUTOMATIZADO DESDE TU PC
 
-1. Conéctate de nuevo por SSH:
-   ```bash
-   ssh -i .\ssh-key-*.key ubuntu@TU_IP_PUBLICA_DE_ORACLE
-   ```
-2. Clona tu repositorio de GitHub:
-   ```bash
-   git clone https://github.com/Walterrrn/proyecto-ai-investment-intelligence-auto.git
-   cd proyecto-ai-investment-intelligence-auto
-   ```
-3. Crea tu archivo `.env` a partir de la plantilla:
-   ```bash
-   cp .env.example .env
-   ```
-4. Levanta el stack completo con Docker Compose:
-   ```bash
-   docker compose up -d --build
-   ```
-5. Comprueba que todos los contenedores están sanos y en ejecución:
-   ```bash
-   docker ps
-   ```
-   Verás en ejecución:
-   * `aii_timescaledb` (PostgreSQL 16 + TimescaleDB)
-   * `aii_redis` (Redis 7)
-   * `aii_backend` (FastAPI en Python 3.12)
+El flujo de trabajo es muy sencillo y te permite controlar todo desde tu ordenador:
 
-6. Prueba que la API responde:
-   ```bash
-   curl http://localhost:8000/api/v1/health
-   ```
-   O entra desde el navegador de tu PC a:
-   `http://TU_IP_PUBLICA_DE_ORACLE:8000/docs`
+```
+[Tu PC (Ryzen 9 / Win 11)] ──► Desarrollas / Pruebas / git commit
+           │
+           ▼ (git push a GitHub)
+       [GitHub]
+           │
+           ▼ (Ejecutas scripts\deploy_oci.ps1 desde tu PC)
+[Servidor OCI Always Free 24/7] ──► Hace git pull y levanta contenedores automáticamente
+```
 
----
+### Despliegue en 1 clic con el Script de PowerShell:
+Cada vez que quieras actualizar lo que corre en OCI con lo que tienes en GitHub, abres PowerShell en tu PC y ejecutas:
 
-## 7. POLÍTICA DE "MÁQUINA OCIOSA" DE ORACLE Y CÓMO EVITARLA
+```powershell
+.\scripts\deploy_oci.ps1 -OciIp "TU_IP_PUBLICA_DE_ORACLE" -KeyPath "C:\ruta\a\tu\oci_key.key"
+```
 
-> [!TIP]
-> Oracle Cloud tiene una cláusula en su programa gratuito: si una máquina pasa más de 7 días consecutivos con un uso de CPU inferior al 15-20% y sin uso de red, puede ser clasificada como "ociosa" (*Idle Instance*) y detenida automáticamente.
-
-En nuestro sistema, **esto queda resuelto de forma natural**:
-* Las tareas programadas de ingesta de datos de mercado (descarga de velas EOD, tipos de la FRED, balances e indicadores on-chain cada hora) generan actividad real periódica de CPU y red.
-* Opcionalmente, se configura un cron en Linux que ejecute un heartbeat cada 10 minutos, garantizando que Oracle reconozca la instancia como un servicio productivo activo 24/7.
+El script se conecta por SSH a OCI, descarga la última versión y reconstruye los contenedores en segundo plano sin interrumpir los datos persistentes de la base de datos.
