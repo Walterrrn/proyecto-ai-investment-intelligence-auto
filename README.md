@@ -57,9 +57,11 @@ proyecto-ai-investment-intelligence-auto/
 ├── docs/                                # Documentación de diseño y guías operativas
 │   ├── architecture/
 │   │   ├── system_design.md             # Blueprint técnico maestro
-│   │   └── data_model.md                # Esquema DDL TimescaleDB / PostgreSQL
+│   │   ├── data_model.md                # Esquema DDL TimescaleDB / PostgreSQL
+│   │   └── cloud_free_tier_analysis.md  # Comparativa de capas gratuitas Cloud
 │   └── guides/
-│       └── windows11_setup.md           # Guía de instalación y ejecución en Windows 11
+│       ├── windows11_setup.md           # Guía de instalación en PC local (Windows 11)
+│       └── oci_always_free_deployment.md# Guía de despliegue 24/7 en Oracle Cloud (Coste 0€)
 ├── src/                                 # Código fuente de la plataforma
 │   ├── core/                            # Configuración Pydantic, seguridad y DB async
 │   │   ├── config.py
