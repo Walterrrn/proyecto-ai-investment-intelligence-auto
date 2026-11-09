@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-investment-intelligence"
+version = "0.1.0"
+description = "Multi-asset intelligent investment, quantitative analysis, and risk management system."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Walter & AI Architecture Team" }
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
